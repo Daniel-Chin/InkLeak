@@ -1,5 +1,5 @@
 static final String TARGET = "verdana.png";
-static final String sequence = "DCPBNQqwertyuiopasdfghjklzxcvbnmWERTYUIOASFGHJKLZXVM";
+static final String sequence = "DCPBNQqwertyuiopasdfghjklzxcvbnmWERTYUIOASFGHJKLZXVM_";
 
 PImage img;
 float zoom;
@@ -122,7 +122,7 @@ ArrayList<Letter> compile() {
         break;
       case 'w':
         nowLetter._width = c._width;
-        nowLetter = new Letter(sequence.charAt(0));
+        nowLetter = new Letter(sequence.charAt(letters.size()));
         letters.add(nowLetter);
         nowStroke = new Stroke();
         nowLetter.strokes.add(nowStroke);
@@ -133,6 +133,7 @@ ArrayList<Letter> compile() {
 }
 
 void mouseClicked() {
+  println("click");
   if (mouseButton == LEFT) {
     PVector clickPos = new PVector(mouseX / zoom, mouseY / zoom);
     if (edgeStart == null) {
@@ -174,4 +175,41 @@ void keyPressed() {
     c.type = 's';
     commands.add(c);
   }
+  if (key == 'o') {
+    output();
+  }
+}
+
+void output() {
+  PrintWriter w;
+  w = createWriter("trace_result.js"); 
+  ArrayList<Letter> letters = compile();
+  w.println("const this_font = { ");
+  for (Letter l : letters) {
+    w.println(l.name + ": [");
+    for (Stroke s : l.strokes) {
+      if (s.edges.size() == 0) {
+        continue;
+      }
+      w.println("[");
+      if (s.do_close) {
+        w.println("CLOSE, ");
+      } else {
+        w.println("OPEN, ");
+      }
+      for (Edge e : s.edges) {
+        w.println(String.format(
+          "[ %4.1f, %4.1f, %4.1f, %4.1f ],", 
+          e.a.x, e.a.y, 
+          e.b.x, e.b.y
+        ));
+      }
+      w.println("], ");
+    }
+    w.println("], ");
+  }
+  w.println("};");
+  w.flush();
+  w.close();
+  println("File saved successfully. ");
 }
