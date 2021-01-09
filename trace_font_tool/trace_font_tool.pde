@@ -47,8 +47,8 @@ class Letter {
 }
 
 void setup() {
-  size(830, 1200);
-  zoom = width / 100f;
+  size(1200, 830);
+  zoom = height / 100f;
   img = loadImage(TARGET);
   commands = new ArrayList<Command>();
 }
