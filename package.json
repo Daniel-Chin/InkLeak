@@ -1,0 +1,25 @@
+{
+  "name": "inkleak",
+  "version": "1.0.0",
+  "description": "A react.js component that animates text as a canvas.",
+  "main": "InkLeak.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Daniel-Chin/InkLeak.git"
+  },
+  "keywords": [
+    "react.js"
+  ],
+  "author": "Daniel Chin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Daniel-Chin/InkLeak/issues"
+  },
+  "homepage": "https://github.com/Daniel-Chin/InkLeak#readme",
+  "dependencies": {
+    "react": "^17.0.1"
+  }
+}
