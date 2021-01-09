@@ -1,6 +1,6 @@
 {
   "name": "inkleak",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A react.js component that animates text as a canvas.",
   "main": "InkLeak.js",
   "scripts": {

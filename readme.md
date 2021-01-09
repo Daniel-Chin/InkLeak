@@ -1,8 +1,13 @@
 # Ink Leak
 A React.js component that animates text as a canvas.  
 
+## Problem
+I have an error that I can't fix. "Support for the experimental syntax 'jsx' isn't currently enabled"  
+
 ## Usage
 ```jsx
+import InkLeak from 'inkleak';
+
 <InkLeak text='a quick brown fox' height={100} />
 ```
 
