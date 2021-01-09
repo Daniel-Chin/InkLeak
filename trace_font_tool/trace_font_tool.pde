@@ -7,7 +7,7 @@ ArrayList<Command> commands;
 int len_commands = 0;
 
 float _width = -1f;
-PVector edgeStart = null;
+PVector nodeStart = null;
 
 class Command {
   char type;
@@ -16,11 +16,11 @@ class Command {
   float _width;
 }
 
-class Edge {
+class Node {
   PVector a;
   PVector b;
 
-  Edge(Command c) {
+  Node(Command c) {
     a = c.a;
     b = c.b;
   }
@@ -28,10 +28,10 @@ class Edge {
 
 class Stroke {
   boolean do_close = false;
-  ArrayList<Edge> edges;
+  ArrayList<Node> nodes;
 
   Stroke() {
-    edges = new ArrayList<Edge>();
+    nodes = new ArrayList<Node>();
   }
 }
 
@@ -47,7 +47,7 @@ class Letter {
 }
 
 void setup() {
-  size(830, 830);
+  size(830, 1200);
   zoom = width / 100f;
   img = loadImage(TARGET);
   commands = new ArrayList<Command>();
@@ -72,17 +72,17 @@ void draw() {
   Letter l = letters.get(letters.size() - 1);
   for (Stroke s : l.strokes) {
     beginShape(QUAD_STRIP);
-    boolean first_edge = true;
-    for (Edge e : s.edges) {
+    boolean first_node = true;
+    for (Node e : s.nodes) {
       vertex(e.a.x, e.a.y);
       vertex(e.b.x, e.b.y);
-      if (first_edge) {
-        first_edge = false;
+      if (first_node) {
+        first_node = false;
         line(e.a.x, e.a.y, e.b.x, e.b.y);
       }
     }
     if (s.do_close) {
-      Edge e = s.edges.get(0);
+      Node e = s.nodes.get(0);
       vertex(e.a.x, e.a.y);
       vertex(e.b.x, e.b.y);
     }
@@ -94,8 +94,8 @@ void draw() {
 
   stroke(#0000FF);
   fill(255, 0, 0, 128);
-  if (edgeStart != null) {
-    rect(edgeStart.x, edgeStart.y, 5, 5);
+  if (nodeStart != null) {
+    rect(nodeStart.x, nodeStart.y, 5, 5);
   }
   popMatrix();
 }
@@ -109,7 +109,7 @@ ArrayList<Letter> compile() {
   for (Command c : commands) {
     switch (c.type) {
       case 'e':
-        nowStroke.edges.add(new Edge(c));
+        nowStroke.nodes.add(new Node(c));
         break;
       case 'c':
         nowStroke.do_close = true;
@@ -136,21 +136,21 @@ void mouseClicked() {
   println("click");
   if (mouseButton == LEFT) {
     PVector clickPos = new PVector(mouseX / zoom, mouseY / zoom);
-    if (edgeStart == null) {
-      edgeStart = clickPos;
+    if (nodeStart == null) {
+      nodeStart = clickPos;
     } else {
       Command c = new Command();
       c.type = 'e';
-      c.a = edgeStart;
+      c.a = nodeStart;
       c.b = clickPos;
-      edgeStart = null;
+      nodeStart = null;
       commands.add(c);
     }
   } else {
-    if (edgeStart == null) {
+    if (nodeStart == null) {
       commands.remove(commands.size() - 1);
     } else {
-      edgeStart = null;
+      nodeStart = null;
     }
   }
 }
@@ -190,7 +190,7 @@ void output() {
     w.print(l._width);
     w.println(", ");
     for (Stroke s : l.strokes) {
-      if (s.edges.size() == 0) {
+      if (s.nodes.size() == 0) {
         continue;
       }
       w.println("[");
@@ -199,7 +199,7 @@ void output() {
       } else {
         w.println("OPEN, ");
       }
-      for (Edge e : s.edges) {
+      for (Node e : s.nodes) {
         w.println(String.format(
           "[ %4.1f, %4.1f, %4.1f, %4.1f ],", 
           e.a.x, e.a.y, 
