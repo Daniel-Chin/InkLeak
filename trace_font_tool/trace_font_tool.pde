@@ -3,19 +3,31 @@ static final String sequence = "DCPBNQqwertyuiopasdfghjklzxcvbnmWERTYUIOASFGHJKL
 
 PImage img;
 float zoom;
-int seq_i = 0;
-Letter nowLetter;
-Edge nowEdge;
-int acc_x = 0;
-boolean start_new_edge = true;
+ArrayList<Command> commands;
+int len_commands = 0;
 
-class Edge {
-  boolean is_close = false;
+float _width = -1f;
+PVector edgeStart = null;
+
+class Command {
+  char type;
   PVector a;
   PVector b;
+  float _width;
+}
+
+class Edge {
+  PVector a;
+  PVector b;
+
+  Edge(Command c) {
+    a = c.a;
+    b = c.b;
+  }
 }
 
 class Stroke {
+  boolean do_close = false;
   ArrayList<Edge> edges;
 
   Stroke() {
@@ -26,7 +38,7 @@ class Stroke {
 class Letter {
   char name;
   ArrayList<Stroke> strokes;
-  float _width = -1f;
+  float _width;
 
   Letter(char x) {
     name = x;
@@ -34,98 +46,132 @@ class Letter {
   }
 }
 
-ArrayList<Letter> letters;
-
 void setup() {
   size(830, 830);
   zoom = width / 100f;
   img = loadImage(TARGET);
-  letters = new ArrayList<Letter>();
-  nowLetter = new Letter(sequence.charAt(0));
-  letters.add(nowLetter);
-
-  fill(#0000FF);
+  commands = new ArrayList<Command>();
 }
 
 void draw() {
+  ArrayList<Letter> letters = compile();
   pushMatrix();
   scale(zoom);
-  stroke(#FF0000);
+
+  {
+    float acc_x = 0;
+    for (Letter l : letters) {
+      acc_x += l._width;
+    }
+    image(img, - acc_x, 0);
+  }
+
+  stroke(#FF00FF);
   strokeWeight(.4);
-  image(img, - acc_x, 0);
-  if (nowEdge != null) {
-    for (Edge edge : nowLetter.edges) {
-      if (! edge.is_close) {
-        if (edge == nowEdge && ! start_new_edge) {
-          rect(edge.a.x, edge.a.y, 5, 5);
-        } else {
-          line(edge.a.x, edge.a.y, edge.b.x, edge.b.y);
-        }
+  fill(0, 255, 0, 128);
+  Letter l = letters.get(letters.size() - 1);
+  for (Stroke s : l.strokes) {
+    beginShape(QUAD_STRIP);
+    boolean first_edge = true;
+    for (Edge e : s.edges) {
+      vertex(e.a.x, e.a.y);
+      vertex(e.b.x, e.b.y);
+      if (first_edge) {
+        first_edge = false;
+        line(e.a.x, e.a.y, e.b.x, e.b.y);
       }
     }
-    if (nowLetter._width > 0) {
-      stroke(#00FF00);
-      line(nowLetter._width, 0, nowLetter._width, 100);
+    if (s.do_close) {
+      Edge e = s.edges.get(0);
+      vertex(e.a.x, e.a.y);
+      vertex(e.b.x, e.b.y);
     }
+      endShape();
+  }
+
+  stroke(#0000FF);
+  line(_width, 0, _width, 100);
+
+  stroke(#0000FF);
+  fill(255, 0, 0, 128);
+  if (edgeStart != null) {
+    rect(edgeStart.x, edgeStart.y, 5, 5);
   }
   popMatrix();
+}
+
+ArrayList<Letter> compile() {
+  ArrayList<Letter> letters = new ArrayList<Letter>();
+  Letter nowLetter = new Letter(sequence.charAt(0));
+  letters.add(nowLetter);
+  Stroke nowStroke = new Stroke();
+  nowLetter.strokes.add(nowStroke);
+  for (Command c : commands) {
+    switch (c.type) {
+      case 'e':
+        nowStroke.edges.add(new Edge(c));
+        break;
+      case 'c':
+        nowStroke.do_close = true;
+        nowStroke = new Stroke();
+        nowLetter.strokes.add(nowStroke);
+        break;
+      case 's':
+        nowStroke = new Stroke();
+        nowLetter.strokes.add(nowStroke);
+        break;
+      case 'w':
+        nowLetter._width = c._width;
+        nowLetter = new Letter(sequence.charAt(0));
+        letters.add(nowLetter);
+        nowStroke = new Stroke();
+        nowLetter.strokes.add(nowStroke);
+        break;
+    }
+  }
+  return letters;
 }
 
 void mouseClicked() {
   if (mouseButton == LEFT) {
     PVector clickPos = new PVector(mouseX / zoom, mouseY / zoom);
-    if (start_new_edge) {
-      Edge edge = new Edge();
-      nowLetter.edges.add(edge);
-      edge.a = clickPos;
-      nowEdge = edge;
+    if (edgeStart == null) {
+      edgeStart = clickPos;
     } else {
-      nowEdge.b = clickPos;
+      Command c = new Command();
+      c.type = 'e';
+      c.a = edgeStart;
+      c.b = clickPos;
+      edgeStart = null;
+      commands.add(c);
     }
-    start_new_edge = ! start_new_edge;
   } else {
-    if (start_new_edge) {
-      if (nowEdge != null) {
-        nowEdge.b = null;
-      } else {
-        if (letters.size() >= 2) {
-          letters.remove(nowLetter);
-          nowLetter = letters.get(letters.size() - 1);
-          nowEdge = nowLetter.edges.get(nowLetter.edges.size() - 1);
-          acc_x -= nowLetter._width;
-          seq_i --;
-          start_new_edge = ! start_new_edge;  // for later to reverse
-        }
-      }
+    if (edgeStart == null) {
+      commands.remove(commands.size() - 1);
     } else {
-      nowLetter.edges.remove(nowEdge);
-      if (nowLetter.edges.size() == 0) {
-        nowEdge = null;
-      } else {
-        nowEdge = nowLetter.edges.get(nowLetter.edges.size() - 1);
-      }
+      edgeStart = null;
     }
-    start_new_edge = ! start_new_edge;
   }
 }
 
 void keyPressed() {
   if (key == 'w') {
-    nowLetter._width = mouseX / zoom;
+    _width = mouseX / zoom;
   }
-  if (key == 'W' && nowLetter._width > 0 && start_new_edge) {
-    acc_x += nowLetter._width;
-    nowEdge = null;
-    seq_i ++;
-    nowLetter = new Letter(sequence.charAt(seq_i));
-    letters.add(nowLetter);
+  if (key == 'W' && _width > 0) {
+    Command c = new Command();
+    c.type = 'w';
+    c._width = _width;
+    commands.add(c);
   }
   if (key == 'c') {
-    Edge edge = new Edge();
-    nowLetter.edges.add(edge);
-    edge.is_close = true;
-    nowEdge = edge;
+    Command c = new Command();
+    c.type = 'c';
+    commands.add(c);
   }
   if (key == 's') {
+    Command c = new Command();
+    c.type = 's';
+    commands.add(c);
   }
 }
