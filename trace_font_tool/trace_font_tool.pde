@@ -187,6 +187,8 @@ void output() {
   w.println("const this_font = { ");
   for (Letter l : letters) {
     w.println(l.name + ": [");
+    w.print(l._width);
+    w.println(", ");
     for (Stroke s : l.strokes) {
       if (s.edges.size() == 0) {
         continue;
