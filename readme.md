@@ -4,6 +4,8 @@ A React.js component that animates text as a canvas.
 ## Problem
 I have an error that I can't fix. "Support for the experimental syntax 'jsx' isn't currently enabled"  
 
+So I can't use npm to package it. Now I can only use it by copying the code into the component folder.  
+
 ## Usage
 ```jsx
 import InkLeak from 'inkleak';
